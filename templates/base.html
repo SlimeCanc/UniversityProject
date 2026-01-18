@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}🎬 MoviGo - Умный поиск фильмов и сериалов{% endblock %}</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/search.css') }}">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Дополнительные анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInFromTop {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .slide-in {
+            animation: slideInFromTop 0.4s ease-out;
+        }
+    </style>
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar slide-in">
+    <div class="nav-container">
+        <a href="{{ url_for('main.index') }}" class="nav-logo">
+            🎬 MoviGo
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('main.index') }}">Главная</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-messages">
+    {% for category, message in messages %}
+    <div class="flash-message {{ category }} fade-in">
+        {% if category == 'success' %}
+        ✅
+        {% elif category == 'error' %}
+        ❌
+        {% elif category == 'info' %}
+        ℹ️
+        {% elif category == 'warning' %}
+        ⚠️
+        {% endif %}
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- Main Content -->
+<main class="main-content">
+    {% block content %}{% endblock %}
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>🎬 MoviGo</h3>
+                <p>Умный поиск фильмов и сериалов по стриминговым платформам</p>
+            </div>
+            <div class="footer-section">
+                <h4>Быстрые ссылки</h4>
+                <a href="{{ url_for('main.index') }}">Главная</a>
+                <a href="/search?q=популярные">Популярные</a>
+                <a href="/search?type=movie">Фильмы</a>
+                <a href="/search?type=series">Сериалы</a>
+            </div>
+            <div class="footer-section">
+                <h4>Платформы</h4>
+                <span class="platform-tag netflix">Netflix</span>
+                <span class="platform-tag amazon">Amazon Prime</span>
+                <span class="platform-tag disney">Disney+</span>
+                <span class="platform-tag hbo">HBO Max</span>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 MoviGo. Все права защищены.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- JavaScript -->
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+
+<script>
+    // Глобальные функции для работы с уведомлениями
+    window.showNotification = function(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `flash-message ${type} fade-in`;
+
+        const icons = {
+            'success': '✅',
+            'error': '❌',
+            'info': 'ℹ️',
+            'warning': '⚠️'
+        };
+
+        notification.innerHTML = `${icons[type] || '💡'} ${message}`;
+
+        const container = document.querySelector('.flash-messages') || createNotificationContainer();
+        container.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 4000);
+    };
+
+    function createNotificationContainer() {
+        const container = document.createElement('div');
+        container.className = 'flash-messages';
+        document.body.insertBefore(container, document.querySelector('.main-content'));
+        return container;
+    }
+
+    // Функция для показа опций просмотра
+    window.showWatchOptions = function(movieId, movieTitle) {
+        showNotification(`Функция "Смотреть" для "${movieTitle}" в разработке`, 'info');
+    };
+
+    // Функция для управления фильтрами
+    window.toggleFilters = function() {
+        const panel = document.getElementById('filtersPanel');
+        if (panel) {
+            panel.classList.toggle('active');
+        }
+    };
+
+    window.removeFilter = function(filterName) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete(filterName);
+        window.location.href = url.toString();
+    };
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        // Автоматическое скрытие flash сообщений
+        const flashMessages = document.querySelectorAll('.flash-message');
+        flashMessages.forEach(message => {
+            setTimeout(() => {
+                message.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => message.remove(), 300);
+            }, 5000);
+        });
+
+        // Добавляем анимацию fadeOut
+        const style = document.createElement('style');
+        style.textContent = `
+                @keyframes fadeOut {
+                    from { opacity: 1; transform: translateX(0); }
+                    to { opacity: 0; transform: translateX(100%); }
+                }
+
+                .dev-link {
+                    background: rgba(123, 97, 255, 0.1);
+                    border: 1px solid var(--secondary);
+                    border-radius: 8px;
+                    padding: 0.5rem 1rem;
+                    transition: all 0.3s ease;
+                }
+
+                .dev-link:hover {
+                    background: var(--secondary);
+                    color: white !important;
+                }
+
+                .platform-tag {
+                    display: inline-block;
+                    padding: 0.3rem 0.6rem;
+                    border-radius: 6px;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    margin: 0.2rem;
+                }
+
+                .platform-tag.netflix {
+                    background: rgba(229, 9, 20, 0.1);
+                    color: #E50914;
+                    border: 1px solid #E50914;
+                }
+
+                .platform-tag.amazon {
+                    background: rgba(0, 168, 225, 0.1);
+                    color: #00A8E1;
+                    border: 1px solid #00A8E1;
+                }
+
+                .platform-tag.disney {
+                    background: rgba(17, 60, 207, 0.1);
+                    color: #113CCF;
+                    border: 1px solid #113CCF;
+                }
+
+                .platform-tag.hbo {
+                    background: rgba(43, 140, 219, 0.1);
+                    color: #2B8CDB;
+                    border: 1px solid #2B8CDB;
+                }
+            `;
+        document.head.appendChild(style);
+
+        console.log('🎬 MoviGo initialized successfully!');
+    });
+</script>
+</body>
+</html>

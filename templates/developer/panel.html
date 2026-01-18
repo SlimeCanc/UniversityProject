@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="developer-header">
+        <h2>🔧 Панель разработчика</h2>
+        <p>Управление базой данных фильмов</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">🎬</div>
+            <div class="stat-number">{{ total_movies }}</div>
+            <div class="stat-label">Всего фильмов</div>
+        </div>
+    </div>
+
+    <div class="actions-grid">
+        <a href="{{ url_for('developer.add_movie') }}" class="action-card">
+            <div class="action-icon">➕</div>
+            <h3>Добавить фильм</h3>
+            <p>Добавить новый фильм в базу данных</p>
+        </a>
+
+        <a href="{{ url_for('developer.movies_list') }}" class="action-card">
+            <div class="action-icon">📋</div>
+            <h3>Список фильмов</h3>
+            <p>Просмотр и управление всеми фильмами</p>
+        </a>
+
+        <a href="{{ url_for('developer.developer_logout') }}" class="action-card">
+            <div class="action-icon">🚪</div>
+            <h3>Выйти</h3>
+            <p>Выйти из панели разработчика</p>
+        </a>
+    </div>
+
+    {% if recent_movies %}
+    <div class="recent-movies">
+        <h3>🆕 Недавно добавленные</h3>
+        <div class="recent-list">
+            {% for movie in recent_movies %}
+            <div class="recent-item">
+                <strong>{{ movie.title }}</strong> ({{ movie.year }})
+                <span class="movie-type">{{ movie.type }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

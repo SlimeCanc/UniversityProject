@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="developer-header">
+        <h2>📋 Все фильмы</h2>
+        <p>Управление базой данных (всего: {{ movies.total }})</p>
+    </div>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('developer.developer_panel') }}" class="btn-secondary">← Назад</a>
+        <a href="{{ url_for('developer.add_movie') }}" class="btn-primary">➕ Добавить фильм</a>
+    </div>
+
+    <div class="movies-list">
+        {% for movie in movies.items %}
+        <div class="movie-item">
+            <div class="movie-info">
+                <h4>{{ movie.title }} ({{ movie.year }})</h4>
+                <p class="movie-meta">{{ movie.type }} • {{ movie.genre }} • ⭐ {{ movie.rating }}</p>
+                <div class="platform-tags">
+                    {% if movie.netflix_available %}<span class="platform-tag netflix">Netflix</span>{% endif %}
+                    {% if movie.amazon_available %}<span class="platform-tag amazon">Amazon</span>{% endif %}
+                    {% if movie.disney_available %}<span class="platform-tag disney">Disney+</span>{% endif %}
+                    {% if movie.hbo_available %}<span class="platform-tag hbo">HBO</span>{% endif %}
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('developer.delete_movie', movie_id=movie.id) }}"
+                  onsubmit="return confirm('Удалить фильм \"{{ movie.title }}\"?')">
+                <button type="submit" class="btn-danger">🗑️ Удалить</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if movies.pages > 1 %}
+    <div class="pagination">
+        {% if movies.has_prev %}
+            <a href="{{ url_for('developer.movies_list', page=movies.prev_num) }}" class="btn-secondary">← Назад</a>
+        {% endif %}
+
+        <span>Страница {{ movies.page }} из {{ movies.pages }}</span>
+
+        {% if movies.has_next %}
+            <a href="{{ url_for('developer.movies_list', page=movies.next_num) }}" class="btn-secondary">Вперед →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

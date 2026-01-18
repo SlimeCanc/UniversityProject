@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="movie-detail">
+        <!-- Хлебные крошки -->
+        <div class="breadcrumbs">
+            <a href="{{ url_for('main.index') }}">Главная</a> >
+            <a href="/search?q={{ movie.type }}">{{ 'Фильмы' if movie.type == 'movie' else 'Сериалы' }}</a> >
+            <span>{{ movie.title }}</span>
+        </div>
+
+        <!-- Основная информация -->
+        <div class="movie-header">
+            <div class="movie-poster">
+                {% if movie.image_url %}
+                <img src="{{ movie.image_url }}" alt="{{ movie.title }}" class="poster-image">
+                {% else %}
+                <div class="no-poster">🎬</div>
+                {% endif %}
+            </div>
+
+            <div class="movie-main-info">
+                <h1 class="movie-title">{{ movie.title }} ({{ movie.year }})</h1>
+                
+                <div class="movie-meta">
+                    <span class="movie-rating">⭐ {{ movie.rating }}/10</span>
+                    <span class="movie-type {{ movie.type }}">
+                        {% if movie.type == 'movie' %}🎞️ Фильм{% else %}📺 Сериал{% endif %}
+                    </span>
+                    <span class="movie-duration">{{ movie.duration }}</span>
+                </div>
+
+                <div class="movie-genres">
+                    {% for genre in movie.genre.split(',') %}
+                    <span class="genre-tag">{{ genre.strip() }}</span>
+                    {% endfor %}
+                </div>
+
+                <!-- Стриминговые платформы -->
+                <div class="streaming-section">
+                    <h3>📡 Доступен на:</h3>
+                    <div class="streaming-platforms">
+                        {% if movie.netflix_available %}
+                        <div class="platform-card netflix">
+                            <span class="platform-logo">N</span>
+                            <span class="platform-name">Netflix</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if movie.amazon_available %}
+                        <div class="platform-card amazon">
+                            <span class="platform-logo">A</span>
+                            <span class="platform-name">Amazon Prime</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if movie.disney_available %}
+                        <div class="platform-card disney">
+                            <span class="platform-logo">D</span>
+                            <span class="platform-name">Disney+</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if movie.hbo_available %}
+                        <div class="platform-card hbo">
+                            <span class="platform-logo">H</span>
+                            <span class="platform-name">HBO Max</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if movie.apple_available %}
+                        <div class="platform-card apple">
+                            <span class="platform-logo">A+</span>
+                            <span class="platform-name">Apple TV+</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if movie.hulu_available %}
+                        <div class="platform-card hulu">
+                            <span class="platform-logo">H</span>
+                            <span class="platform-name">Hulu</span>
+                        </div>
+                        {% endif %}
+
+                        {% if not movie.netflix_available and not movie.amazon_available 
+                              and not movie.disney_available and not movie.hbo_available 
+                              and not movie.apple_available and not movie.hulu_available %}
+                        <div class="no-platforms">
+                            😔 Не доступен для онлайн-просмотра
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Кнопки действий -->
+                <div class="action-buttons">
+                    <button class="watch-btn" onclick="showWatchOptions()">
+                        🎥 Смотреть
+                    </button>
+                    <a href="/search?q={{ movie.title|urlencode }}" class="similar-btn">
+                        🔍 Похожие
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Описание -->
+        <div class="movie-description-section">
+            <h3>📖 Описание</h3>
+            <div class="description-text">
+                {% if movie.description %}
+                    {{ movie.description }}
+                {% else %}
+                    <p class="no-description">Описание отсутствует</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Похожие фильмы -->
+        <div class="similar-movies">
+            <h3>🎬 Похожие {{ 'фильмы' if movie.type == 'movie' else 'сериалы' }}</h3>
+            <div class="similar-grid">
+                {% for similar in similar_movies %}
+                <a href="{{ url_for('main.movie_detail', movie_id=similar.id) }}" class="similar-card">
+                    {% if similar.image_url %}
+                    <img src="{{ similar.image_url }}" alt="{{ similar.title }}">
+                    {% endif %}
+                    <div class="similar-info">
+                        <h4>{{ similar.title }}</h4>
+                        <p>{{ similar.year }} • ⭐ {{ similar.rating }}</p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showWatchOptions() {
+    const platforms = [];
+    {% if movie.netflix_available %}platforms.push('Netflix');{% endif %}
+    {% if movie.amazon_available %}platforms.push('Amazon Prime');{% endif %}
+    {% if movie.disney_available %}platforms.push('Disney+');{% endif %}
+    {% if movie.hbo_available %}platforms.push('HBO Max');{% endif %}
+    {% if movie.apple_available %}platforms.push('Apple TV+');{% endif %}
+    {% if movie.hulu_available %}platforms.push('Hulu');{% endif %}
+
+    if (platforms.length > 0) {
+        const message = `Доступен на: ${platforms.join(', ')}\n\nЭта функция в разработке - скоро вы сможете перейти к просмотру!`;
+        alert(message);
+    } else {
+        alert('Этот контент временно недоступен для онлайн-просмотра');
+    }
+}
+</script>
+{% endblock %}

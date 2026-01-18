@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <!-- Search Header with Filters -->
+    <div class="search-header">
+        <form class="search-box" action="/search" method="GET" id="searchForm">
+            <input type="text" name="q" value="{{ search_query }}" placeholder="Поиск фильмов и сериалов..."
+                   class="search-input" id="searchInput" autocomplete="off">
+            <button type="submit" class="search-btn">🔍 Найти</button>
+        </form>
+
+        <button class="filters-toggle-btn" onclick="toggleFilters()">🎛️ Фильтры</button>
+    </div>
+
+    <!-- Filters Panel -->
+    <div class="filters-panel" id="filtersPanel">
+        <form method="GET" action="/search" class="filters-form">
+            <input type="hidden" name="q" value="{{ search_query }}">
+
+            <div class="filter-group">
+                <h4>🎭 Жанр</h4>
+                <select name="genre" class="filter-select">
+                    <option value="all">Все жанры</option>
+                    <option value="Драма" {% if request.args.get('genre') == 'Драма' %}selected{% endif %}>Драма</option>
+                    <option value="Фантастика" {% if request.args.get('genre') == 'Фантастика' %}selected{% endif %}>Фантастика</option>
+                    <option value="Боевик" {% if request.args.get('genre') == 'Боевик' %}selected{% endif %}>Боевик</option>
+                    <option value="Комедия" {% if request.args.get('genre') == 'Комедия' %}selected{% endif %}>Комедия</option>
+                    <option value="Триллер" {% if request.args.get('genre') == 'Триллер' %}selected{% endif %}>Триллер</option>
+                    <option value="Фэнтези" {% if request.args.get('genre') == 'Фэнтези' %}selected{% endif %}>Фэнтези</option>
+                    <option value="Криминал" {% if request.args.get('genre') == 'Криминал' %}selected{% endif %}>Криминал</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <h4>📅 Год выпуска</h4>
+                <div class="year-range">
+                    <input type="number" name="year_from" placeholder="От" value="{{ request.args.get('year_from', '') }}"
+                           min="1900" max="2024" class="year-input">
+                    <span>-</span>
+                    <input type="number" name="year_to" placeholder="До" value="{{ request.args.get('year_to', '') }}"
+                           min="1900" max="2024" class="year-input">
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h4>⭐ Рейтинг</h4>
+                <select name="min_rating" class="filter-select">
+                    <option value="">Любой рейтинг</option>
+                    <option value="9" {% if request.args.get('min_rating') == '9' %}selected{% endif %}>9+ Выдающийся</option>
+                    <option value="8" {% if request.args.get('min_rating') == '8' %}selected{% endif %}>8+ Отличный</option>
+                    <option value="7" {% if request.args.get('min_rating') == '7' %}selected{% endif %}>7+ Хороший</option>
+                    <option value="6" {% if request.args.get('min_rating') == '6' %}selected{% endif %}>6+ Нормальный</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <h4>🎬 Тип контента</h4>
+                <div class="type-buttons">
+                    <label class="type-label">
+                        <input type="radio" name="type" value="all" {% if not request.args.get('type') or request.args.get('type') == 'all' %}checked{% endif %}>
+                        <span>Все</span>
+                    </label>
+                    <label class="type-label">
+                        <input type="radio" name="type" value="movie" {% if request.args.get('type') == 'movie' %}checked{% endif %}>
+                        <span>🎞️ Фильмы</span>
+                    </label>
+                    <label class="type-label">
+                        <input type="radio" name="type" value="series" {% if request.args.get('type') == 'series' %}checked{% endif %}>
+                        <span>📺 Сериалы</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h4>📡 Стриминговые платформы</h4>
+                <div class="platform-checkboxes">
+                    {% for platform in ['netflix', 'amazon', 'disney', 'hbo'] %}
+                    <label class="platform-label">
+                        <input type="checkbox" name="streaming" value="{{ platform }}"
+                               {% if platform in request.args.getlist('streaming') %}checked{% endif %}>
+                        <span class="platform-{{ platform }}">{{ platform|title }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <button type="submit" class="apply-filters-btn">Применить фильтры</button>
+                <a href="/search{% if search_query %}?q={{ search_query }}{% endif %}" class="reset-filters-btn">Сбросить</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Active Filters -->
+    {% macro remove_filter_url(filter_name) -%}
+    {% set url_params = request.args.copy() %}
+    {% set _ = url_params.pop(filter_name, None) %}
+    /search?{{ url_params|urlencode }}
+    {%- endmacro %}
+
+    {% set active_filters = [] %}
+    {% if request.args.get('genre') and request.args.get('genre') != 'all' %}
+    {% set _ = active_filters.append(('Жанр: ' + request.args.get('genre'), 'genre')) %}
+    {% endif %}
+    {% if request.args.get('year_from') %}
+    {% set _ = active_filters.append(('Год от: ' + request.args.get('year_from'), 'year_from')) %}
+    {% endif %}
+    {% if request.args.get('year_to') %}
+    {% set _ = active_filters.append(('Год до: ' + request.args.get('year_to'), 'year_to')) %}
+    {% endif %}
+    {% if request.args.get('min_rating') %}
+    {% set _ = active_filters.append(('Рейтинг: ' + request.args.get('min_rating') + '+', 'min_rating')) %}
+    {% endif %}
+    {% if request.args.get('type') and request.args.get('type') != 'all' %}
+    {% set type_name = 'Фильмы' if request.args.get('type') == 'movie' else 'Сериалы' %}
+    {% set _ = active_filters.append((type_name, 'type')) %}
+    {% endif %}
+    {% if request.args.getlist('streaming') %}
+    {% set platform_names = {'netflix': 'Netflix', 'amazon': 'Amazon', 'disney': 'Disney+', 'hbo': 'HBO'} %}
+    {% for platform in request.args.getlist('streaming') %}
+    {% set _ = active_filters.append((platform_names[platform], 'streaming')) %}
+    {% endfor %}
+    {% endif %}
+
+    {% if active_filters %}
+    <div class="active-filters">
+        <strong>Активные фильтры:</strong>
+        {% for filter_text, filter_name in active_filters %}
+        <span class="active-filter-tag">
+            {{ filter_text }}
+            <a href="{{ remove_filter_url(filter_name) }}" class="remove-filter" onclick="removeFilter('{{ filter_name }}'); return false;">×</a>
+        </span>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Results Header -->
+    <div class="results-header">
+        <h2>Результаты поиска</h2>
+        <p class="results-count">Найдено: <span>{{ total_results }}</span> фильмов и сериалов</p>
+
+        {% if search_query %}
+        <p class="search-query">По запросу: "{{ search_query }}"</p>
+        {% endif %}
+    </div>
+
+    <!-- Movies Grid -->
+    <div class="movies-grid">
+        {% for movie in movies %}
+        <div class="movie-card" data-movie-id="{{ movie.id }}">
+            <div class="movie-image">
+                {% if movie.image_url %}
+                <img src="{{ movie.image_url }}" alt="{{ movie.title }}" onerror="this.style.display='none'">
+                {% endif %}
+                <div class="image-overlay">
+                    <span class="overlay-year">{{ movie.year }}</span>
+                    <span class="overlay-rating">⭐ {{ movie.rating }}</span>
+                </div>
+
+                <div class="streaming-badges">
+                    {% if movie.netflix_available %}<span class="streaming-badge netflix">N</span>{% endif %}
+                    {% if movie.amazon_available %}<span class="streaming-badge amazon">A</span>{% endif %}
+                    {% if movie.disney_available %}<span class="streaming-badge disney">D</span>{% endif %}
+                    {% if movie.hbo_available %}<span class="streaming-badge hbo">H</span>{% endif %}
+                </div>
+            </div>
+
+            <div class="movie-info">
+                <h3 class="movie-title">{{ movie.title }}</h3>
+
+                <div class="movie-meta">
+                    <span class="movie-type {{ movie.type }}">
+                        {% if movie.type == 'movie' %}🎞️ Фильм{% else %}📺 Сериал{% endif %}
+                    </span>
+                    <span class="movie-duration">{{ movie.duration }}</span>
+                </div>
+
+                <p class="movie-genre">{{ movie.genre }}</p>
+
+                <div class="streaming-platforms">
+                    <div class="platforms-list">
+                        {% if movie.netflix_available %}
+                        <span class="platform-indicator netflix">Netflix</span>
+                        {% endif %}
+                        {% if movie.amazon_available %}
+                        <span class="platform-indicator amazon">Amazon Prime</span>
+                        {% endif %}
+                        {% if movie.disney_available %}
+                        <span class="platform-indicator disney">Disney+</span>
+                        {% endif %}
+                        {% if movie.hbo_available %}
+                        <span class="platform-indicator hbo">HBO Max</span>
+                        {% endif %}
+                        {% if not movie.netflix_available and not movie.amazon_available and not movie.disney_available and not movie.hbo_available %}
+                        <span class="platform-indicator none">Не доступен онлайн</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if movie.description %}
+                <p class="movie-description">{{ movie.description[:150] }}{% if movie.description|length > 150 %}...{% endif %}</p>
+                {% endif %}
+
+                <div class="card-actions">
+                    <button class="quick-view-btn" onclick="openMovieDetail({{ movie.id }})">
+                        📖 Подробнее
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="no-results">
+            <div class="no-results-icon">🔍</div>
+            <h3>Ничего не найдено</h3>
+            <p>Попробуйте изменить параметры поиска или использовать другие фильтры</p>
+            <a href="/" class="back-to-search">Вернуться к поиску</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // Функция для удаления фильтра
+    function removeFilter(filterName) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete(filterName);
+        window.location.href = url.toString();
+    }
+
+    // Функция для показа/скрытия фильтров
+    function toggleFilters() {
+        const panel = document.getElementById('filtersPanel');
+        panel.classList.toggle('active');
+    }
+
+    // Обработчики для карточек фильмов
+    document.addEventListener('DOMContentLoaded', function() {
+        const movieCards = document.querySelectorAll('.movie-card');
+
+        movieCards.forEach(card => {
+            card.style.cursor = 'pointer';
+
+            card.addEventListener('click', function(e) {
+                if (!e.target.closest('.btn') && !e.target.closest('button')) {
+                    const movieId = this.dataset.movieId;
+                    if (movieId) {
+                        openMovieDetail(movieId);
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
